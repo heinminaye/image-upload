@@ -1,7 +1,6 @@
-
 import mongoose, { Schema } from 'mongoose';
-import { IImage } from '../interfaces/Image';
-const ImageSchema: Schema = new Schema<IImage>(
+
+const ImageSchema: Schema = new Schema(
   {
     title: {
       type: String,
@@ -26,12 +25,35 @@ const ImageSchema: Schema = new Schema<IImage>(
       type: Number,
       required: true,
     },
+    contentType: {
+      type: String,
+      required: true,
+    },
+    fileId: {
+      type: Schema.Types.ObjectId,
+      required: true,
+      ref: 'fs.files', // reference to GridFS files collection
+    },
+    width: {
+      type: Number,
+      required: false,
+    },
+    height: {
+      type: Number,
+      required: false,
+    },
   },
   {
-    timestamps: true, // Adds createdAt and updatedAt fields
+    timestamps: true,
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
   }
 );
 
-export default mongoose.model<IImage>('Image', ImageSchema);
+// Virtual field to generate URL for image access
+ImageSchema.virtual('url').get(function () {
+  // Customize this URL based on API route
+  return `/api/images/${this.fileId}`;
+});
+
+export default mongoose.model('Image', ImageSchema);

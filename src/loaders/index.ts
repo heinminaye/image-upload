@@ -6,7 +6,7 @@ export default async ({ expressApp }: { expressApp: any }) => {
 
     const imageModel = {
         name: 'imageModel',
-        model: require('../models/image'),
+        model: require('../models/image').default,
     }
 
     await connectDB();

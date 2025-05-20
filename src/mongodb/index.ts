@@ -2,19 +2,16 @@ import mongoose from 'mongoose';
 import { MongoClient, GridFSBucket } from 'mongodb';
 import config from '../config';
 
-let gridFSBucket: GridFSBucket;
+let gridFSBucket: GridFSBucket | null = null;
 
 const connectDB = async () => {
   try {
-    // Connect mongoose as usual
     await mongoose.connect(config.MONGO_URI);
     console.log('MongoDB connected successfully with Mongoose');
 
-    // Also get the native MongoDB client from mongoose connection
     const client = mongoose.connection.getClient();
-    const db = client.db(); // get default DB from URIx
+    const db = client.db(); // Get DB from URI
 
-    // Create GridFSBucket instance
     gridFSBucket = new GridFSBucket(db, {
       bucketName: 'images',
     });
@@ -26,6 +23,13 @@ const connectDB = async () => {
   }
 };
 
-// Export GridFSBucket to use in other files
+// Safely get GridFSBucket after initialization
+const getGridFSBucket = (): GridFSBucket => {
+  if (!gridFSBucket) {
+    throw new Error('GridFSBucket has not been initialized yet');
+  }
+  return gridFSBucket;
+};
+
 export default connectDB;
-export { gridFSBucket };
+export { getGridFSBucket };

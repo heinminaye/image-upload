@@ -1,14 +1,16 @@
 import { Container } from 'typedi';
-import config from '../config';
+import mongoose from 'mongoose';
+import { getGridFSBucket } from '../mongodb';
 
-export default ({ models }: { models: { name: string; model: any }[] }) => {
-  try {
-    models.forEach(m => {
-      Container.set(m.name, m.model);
-    });
+export default async ({ models }: { models: { name: string; model: any }[] }) => {
+  // Register all your models
+  models.forEach(({ name, model }) => {
+    Container.set(name, model);
+  });
 
-    return {};
-  } catch (e) {
-    throw e;
-  }
+  // Register mongoose connection
+  Container.set('mongooseConnection', mongoose.connection);
+
+  // Register GridFSBucket instance (optional, if you want to inject it)
+  Container.set('gridFSBucket', getGridFSBucket());
 };
