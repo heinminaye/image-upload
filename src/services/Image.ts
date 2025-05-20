@@ -23,6 +23,64 @@ export default class ImageService {
         });
     }
 
+    public async getAllImages(
+    cursor: string | null = null,
+    limit: number = 2,
+    search: string | null = null
+): Promise<{
+    images: IImage[];
+    nextCursor: string | null;
+    hasMore: boolean;
+}> {
+    try {
+        let query: any = {};
+
+        if (cursor) {
+            query._id = { $lt: new mongoose.Types.ObjectId(cursor) };
+        }
+
+        if (search) {
+            const searchRegex = new RegExp(search, 'i');
+            query.$or = [
+                { title: searchRegex },
+                { description: searchRegex }
+            ];
+        }
+
+        const images = await this.imageModel.find(query)
+            .sort({ uploadDate: -1 })
+            .limit(limit + 1)
+            .lean()
+            .exec();
+
+        let hasMore = false;
+        let nextCursor = null;
+
+        if (images.length > limit) {
+            hasMore = true;
+            images.pop(); // remove the extra image
+        }
+
+        if (images.length > 0) {
+            nextCursor = images[images.length - 1]._id.toString();
+        }
+
+        return {
+            images,
+            nextCursor,
+            hasMore
+        };
+    } catch (error) {
+        console.error('Error fetching paginated images:', error);
+        return {
+            images: [],
+            nextCursor: null,
+            hasMore: false
+        };
+    }
+}
+
+
     async uploadImage(
         fileBuffer: Buffer,
         filename: string,
@@ -39,7 +97,7 @@ export default class ImageService {
 
             uploadStream.on('finish', async (file: any) => {
                 try {
-                    const fileId = uploadStream.id; 
+                    const fileId = uploadStream.id;
                     const size = fileBuffer.length;
                     const imageDoc = await this.imageModel.create({
                         title: metadata.title,
@@ -84,11 +142,9 @@ export default class ImageService {
 
     public async validateImageFile(buffer: Buffer): Promise<boolean> {
         try {
-            // First check with file-type to verify the actual file signature
             const fileType = await fileTypeFromBuffer(buffer);
             if (!fileType) return false;
 
-            // List of allowed image MIME types
             const allowedMimeTypes = [
                 'image/jpeg',
                 'image/png',
@@ -97,12 +153,10 @@ export default class ImageService {
                 'image/svg+xml'
             ];
 
-            // Check if the detected type is in our allowed list
             if (!allowedMimeTypes.includes(fileType.mime)) {
                 return false;
             }
 
-            // Additional verification with sharp to ensure it's actually processable
             try {
                 await sharp(buffer).metadata();
                 return true;

@@ -40,6 +40,33 @@ const UploadImageSchema = Joi.object({
 export default (app: Router) => {
     app.use('/images', route);
 
+    route.get('/', async (req: Request, res: Response, next: NextFunction) => {
+    const imageService = Container.get(ImageService);
+    const cursor = req.query.cursor as string || null;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const search = req.query.search as string || null;
+
+    try {
+        const result = await imageService.getAllImages(cursor, limit, search);
+
+        res.status(200).json({
+            returncode: '200',
+            message: 'Images retrieved successfully',
+            data: {
+                images: result.images,
+                pagination: {
+                    next_cursor: result.nextCursor,
+                    has_more: result.hasMore
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Error retrieving images:', error);
+        next(error);
+    }
+});
+
+
     route.post(
         '/upload',
         (req: Request, res: Response, next: NextFunction) => {
@@ -113,17 +140,17 @@ export default (app: Router) => {
         const fileId = req.params.fileId;
 
         try {
-            // First check if the image document exists
             const imageDoc = await imageService.getImageDocument(fileId);
             if (imageDoc) {
-                res.setHeader('Content-Type', imageDoc.contentType );
+                res.setHeader('Content-Type', imageDoc.contentType);
             }
             else {
-                 res.status(404).json({
+                res.status(404).json({
                     returncode: '404',
                     message: 'Image not found'
                 });
             }
+
             const stream = await imageService.getImageFileStream(fileId);
             if (stream) {
                 stream.on('error', (err) => {

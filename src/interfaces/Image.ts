@@ -10,5 +10,5 @@ export interface IImage extends Document {
   fileId: mongoose.Types.ObjectId;
   width?: number;
   height?: number;
-  url?: string; // Virtual property for access URL
+  url?: string;
 }
