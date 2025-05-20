@@ -50,6 +50,7 @@ export default class ImageService {
         const images = await this.imageModel.find(query)
             .sort({ uploadDate: -1 })
             .limit(limit + 1)
+            .select('-__v -createdAt -updatedAt')
             .lean()
             .exec();
 
@@ -58,7 +59,7 @@ export default class ImageService {
 
         if (images.length > limit) {
             hasMore = true;
-            images.pop(); // remove the extra image
+            images.pop();
         }
 
         if (images.length > 0) {

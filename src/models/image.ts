@@ -52,7 +52,7 @@ const ImageSchema: Schema = new Schema(
         delete ret.__v;
         delete ret.createdAt;
         delete ret.updatedAt;
-        delete ret._id;
+        delete ret.id;
         return ret;
       }
     },
@@ -62,7 +62,7 @@ const ImageSchema: Schema = new Schema(
         delete ret.__v;
         delete ret.createdAt;
         delete ret.updatedAt;
-        delete ret._id;
+        delete ret.id;
         return ret;
       }
     }
