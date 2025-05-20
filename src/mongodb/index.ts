@@ -12,7 +12,7 @@ const connectDB = async () => {
 
     // Also get the native MongoDB client from mongoose connection
     const client = mongoose.connection.getClient();
-    const db = client.db(); // get default DB from URI
+    const db = client.db(); // get default DB from URIx
 
     // Create GridFSBucket instance
     gridFSBucket = new GridFSBucket(db, {
@@ -27,4 +27,5 @@ const connectDB = async () => {
 };
 
 // Export GridFSBucket to use in other files
-export { connectDB, gridFSBucket };
+export default connectDB;
+export { gridFSBucket };

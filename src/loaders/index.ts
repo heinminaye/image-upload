@@ -1,15 +1,22 @@
 import expressLoader from "./express";
 import dependencyInjectorLoader from "./dependencyInjector";
+import connectDB from '../mongodb'; 
 
 export default async ({ expressApp }: { expressApp: any }) => {
-  
 
-  // Dependency Injection
-  await dependencyInjectorLoader({
-    models: [
-    ],
-  });
+    const imageModel = {
+        name: 'imageModel',
+        model: require('../models/image'),
+    }
 
-  // Start Express App
-  await expressLoader({ app: expressApp });
+    await connectDB();
+    // Dependency Injection
+    await dependencyInjectorLoader({
+        models: [
+            imageModel
+        ],
+    });
+
+    // Start Express App
+    await expressLoader({ app: expressApp });
 };
