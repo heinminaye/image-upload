@@ -65,7 +65,6 @@ export default class ImageService {
         if (images.length > 0) {
             nextCursor = images[images.length - 1]._id.toString();
         }
-
         return {
             images,
             nextCursor,
