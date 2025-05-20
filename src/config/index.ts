@@ -3,5 +3,5 @@ export default {
     api: {
         prefix: "/api",
     },
-    MONGO_URI: "mongodb://localhost:27017/myapp"
+    MONGO_URI: "mongodb://localhost:27017/image_upload"
 };

@@ -1,10 +1,11 @@
 import "reflect-metadata";
 import express from "express";
+import { connectDB } from "./mongodb";
 
 const app = express();
 
 require("./loaders").default({ expressApp: app });
-
+connectDB();
 const port = process.env.PORT || 3030;
 var server = app
   .listen(3030, () => {
