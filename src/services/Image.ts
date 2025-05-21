@@ -5,8 +5,6 @@ import mongoose from 'mongoose';
 import { GridFSBucket, ObjectId } from 'mongodb';
 import { fileTypeFromBuffer } from 'file-type';
 import sharp from 'sharp';
-
-
 @Service()
 export default class ImageService {
     private bucket: GridFSBucket;
@@ -24,61 +22,61 @@ export default class ImageService {
     }
 
     public async getAllImages(
-    cursor: string | null = null,
-    limit: number = 2,
-    search: string | null = null
-): Promise<{
-    images: IImage[];
-    nextCursor: string | null;
-    hasMore: boolean;
-}> {
-    try {
-        let query: any = {};
+        cursor: string | null = null,
+        limit: number,
+        search: string | null = null
+    ): Promise<{
+        images: IImage[];
+        nextCursor: string | null;
+        hasMore: boolean;
+    }> {
+        try {
+            let query: any = {};
 
-        if (cursor) {
-            query._id = { $lt: new mongoose.Types.ObjectId(cursor) };
+            if (cursor) {
+                query._id = { $lt: new mongoose.Types.ObjectId(cursor) };
+            }
+
+            if (search) {
+                const searchRegex = new RegExp(search, 'i');
+                query.$or = [
+                    { title: searchRegex },
+                    { description: searchRegex }
+                ];
+            }
+
+            const images = await this.imageModel.find(query)
+                .sort({ uploadDate: -1 })
+                .limit(limit + 1)
+                .select('-__v -createdAt -updatedAt')
+                .lean()
+                .exec();
+
+            let hasMore = false;
+            let nextCursor = null;
+
+            if (images.length > limit) {
+                hasMore = true;
+                images.pop();
+            }
+
+            if (images.length > 0) {
+                nextCursor = images[images.length - 1]._id.toString();
+            }
+            return {
+                images,
+                nextCursor,
+                hasMore
+            };
+        } catch (error) {
+            console.error('Error fetching paginated images:', error);
+            return {
+                images: [],
+                nextCursor: null,
+                hasMore: false
+            };
         }
-
-        if (search) {
-            const searchRegex = new RegExp(search, 'i');
-            query.$or = [
-                { title: searchRegex },
-                { description: searchRegex }
-            ];
-        }
-
-        const images = await this.imageModel.find(query)
-            .sort({ uploadDate: -1 })
-            .limit(limit + 1)
-            .select('-__v -createdAt -updatedAt')
-            .lean()
-            .exec();
-
-        let hasMore = false;
-        let nextCursor = null;
-
-        if (images.length > limit) {
-            hasMore = true;
-            images.pop();
-        }
-
-        if (images.length > 0) {
-            nextCursor = images[images.length - 1]._id.toString();
-        }
-        return {
-            images,
-            nextCursor,
-            hasMore
-        };
-    } catch (error) {
-        console.error('Error fetching paginated images:', error);
-        return {
-            images: [],
-            nextCursor: null,
-            hasMore: false
-        };
     }
-}
 
 
     async uploadImage(
@@ -148,9 +146,7 @@ export default class ImageService {
             const allowedMimeTypes = [
                 'image/jpeg',
                 'image/png',
-                'image/gif',
-                'image/webp',
-                'image/svg+xml'
+                'image/webp'
             ];
 
             if (!allowedMimeTypes.includes(fileType.mime)) {
