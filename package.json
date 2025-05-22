@@ -1,14 +1,13 @@
 {
   "name": "image-upload",
   "version": "1.0.0",
-  "main": "src/app.ts",
+  "main":"src/app.ts",
   "scripts": {
     "dev": "ts-node-dev --respawn src/app.ts",
     "build": "tsc",
     "tsc": "tsc",
     "heroku-postbuild": "npm run build",
-    "start": "nodemon",
-    "vercel-build": "npm run build"
+    "start": "nodemon"
   },
   "keywords": [],
   "author": "",
@@ -27,6 +26,7 @@
     "multer": "^2.0.0",
     "nodemon": "^3.1.10",
     "reflect-metadata": "^0.2.2",
+    "serverless": "^4.14.4",
     "serverless-http": "^3.2.0",
     "sharp": "^0.34.1",
     "typedi": "^0.10.0"
