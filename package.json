@@ -1,7 +1,7 @@
 {
   "name": "image-upload",
   "version": "1.0.0",
-  "main":"src/app.ts",
+  "main": "src/app.ts",
   "scripts": {
     "dev": "ts-node-dev --respawn src/app.ts",
     "build": "tsc",
@@ -14,6 +14,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@railway/cli": "^4.5.1",
     "@vendia/serverless-express": "^4.12.6",
     "celebrate": "^15.0.3",
     "cors": "^2.8.5",
