@@ -12,8 +12,18 @@ export default ({ app }: { app: express.Application }) => {
     res.json({"message" : "Server is running!"})
   });
 
+  // Configure CORS
+  const options = [
+    cors({
+      origin: '*',
+      methods: '*',
+      allowedHeaders: ['Content-Type', 'Authorization'],
+      credentials: true,
+    })
+  ];
+
   // Enable Cross Origin Resource Sharing to all origins by default
-  app.use(cors());
+  app.use(options);
 
   //Header override
   app.use(require("method-override")());
