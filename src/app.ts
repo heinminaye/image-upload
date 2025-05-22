@@ -30,4 +30,4 @@ process.on("unhandledRejection", (reason, promise) => {
   console.log("----- Reason -----");
   console.log(reason);
 });
-
+export default app;

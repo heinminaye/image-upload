@@ -14,6 +14,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@vendia/serverless-express": "^4.12.6",
     "celebrate": "^15.0.3",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
