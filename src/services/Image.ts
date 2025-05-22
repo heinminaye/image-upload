@@ -3,7 +3,6 @@ import { Model } from 'mongoose';
 import { IImage } from '../interfaces/Image';
 import mongoose from 'mongoose';
 import { GridFSBucket, ObjectId } from 'mongodb';
-import { fileTypeFromBuffer } from 'file-type';
 import sharp from 'sharp';
 @Service()
 export default class ImageService {
@@ -140,27 +139,18 @@ export default class ImageService {
 
     public async validateImageFile(buffer: Buffer): Promise<boolean> {
         try {
-            const fileType = await fileTypeFromBuffer(buffer);
-            if (!fileType) return false;
+            const metadata = await sharp(buffer).metadata();
 
-            const allowedMimeTypes = [
-                'image/jpeg',
-                'image/png',
-                'image/webp'
-            ];
+            const allowedFormats = ['jpeg', 'png', 'webp'];
 
-            if (!allowedMimeTypes.includes(fileType.mime)) {
+            if (!metadata.format || !allowedFormats.includes(metadata.format)) {
                 return false;
             }
 
-            try {
-                await sharp(buffer).metadata();
-                return true;
-            } catch (sharpError) {
-                return false;
-            }
+            return true;
         } catch (error) {
             return false;
         }
     }
+
 }
