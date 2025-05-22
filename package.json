@@ -7,7 +7,8 @@
     "build": "tsc",
     "tsc": "tsc",
     "heroku-postbuild": "npm run build",
-    "start": "nodemon"
+    "start": "nodemon",
+    "vercel-build": "npm run build"
   },
   "keywords": [],
   "author": "",
@@ -26,6 +27,7 @@
     "multer": "^2.0.0",
     "nodemon": "^3.1.10",
     "reflect-metadata": "^0.2.2",
+    "serverless-http": "^3.2.0",
     "sharp": "^0.34.1",
     "typedi": "^0.10.0"
   },

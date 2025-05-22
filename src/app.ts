@@ -4,6 +4,7 @@ import express from "express";
 const app = express();
 
 require("./loaders").default({ expressApp: app });
+
 const port = process.env.PORT || 3030;
 var server = app
   .listen(3030, () => {
@@ -30,4 +31,4 @@ process.on("unhandledRejection", (reason, promise) => {
   console.log("----- Reason -----");
   console.log(reason);
 });
-export default app;
+
