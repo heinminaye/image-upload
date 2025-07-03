@@ -32,4 +32,4 @@ process.on("unhandledRejection", (reason, promise) => {
   console.log(reason);
 });
 
-module.exports = app;
+export default app;

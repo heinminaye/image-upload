@@ -4,7 +4,6 @@
   "main": "src/app.ts",
   "scripts": {
     "dev": "ts-node-dev --respawn src/app.ts",
-    "build": "tsc",
     "tsc": "tsc",
     "heroku-postbuild": "npm run build",
     "start": "nodemon"

@@ -77,7 +77,6 @@ export default class ImageService {
         }
     }
 
-
     async uploadImage(
         fileBuffer: Buffer,
         filename: string,
@@ -152,5 +151,119 @@ export default class ImageService {
             return false;
         }
     }
+
+    public async updateImageWithFile(
+        fileId: string,
+        fileBuffer: Buffer,
+        filename: string,
+        contentType: string,
+        metadata: { title: string; description: string; width?: number; height?: number }
+    ): Promise<IImage | null> {
+        try {
+            const _id = new mongoose.Types.ObjectId(fileId);
+
+            // Step 1: Find existing image
+            const existingImage = await this.imageModel.findOne({ fileId: _id });
+            if (!existingImage) return null;
+
+            // Step 2: Delete previous image file from GridFS
+            try {
+                await this.bucket.delete(existingImage.fileId);
+            } catch (error) {
+                console.warn('Failed to delete previous GridFS file:', error);
+            }
+
+            // Step 3: Remove old metadata
+            await this.imageModel.deleteOne({ fileId: _id });
+
+            // Step 4: Upload new image file
+            const uploadStream = this.bucket.openUploadStream(filename, {
+                contentType,
+                metadata,
+            });
+
+            uploadStream.end(fileBuffer);
+
+            return new Promise((resolve, reject) => {
+                uploadStream.on('finish', async (file: any) => {
+                    try {
+                        const newFileId = uploadStream.id;
+                        const size = fileBuffer.length;
+
+                        const updatedDoc = await this.imageModel.create({
+                            title: metadata.title,
+                            description: metadata.description,
+                            filename,
+                            size,
+                            contentType,
+                            fileId: newFileId,
+                            width: metadata.width,
+                            height: metadata.height,
+                        });
+
+                        resolve(updatedDoc);
+                    } catch (err) {
+                        reject(err);
+                    }
+                });
+
+                uploadStream.on('error', (err) => reject(err));
+            });
+        } catch (error) {
+            console.error('Error updating image:', error);
+            return null;
+        }
+    }
+
+    public async updateImageMetadata(
+  fileId: string,
+  metadata: { title: string; description: string; width?: number; height?: number }
+): Promise<IImage | null> {
+  try {
+    const _id = new mongoose.Types.ObjectId(fileId);
+
+    const image = await this.imageModel.findOneAndUpdate(
+      { fileId: _id },
+      {
+        title: metadata.title,
+        description: metadata.description,
+        width: metadata.width,
+        height: metadata.height,
+      },
+      { new: true }
+    ).lean();
+
+    return image;
+  } catch (error) {
+    console.error('Error updating metadata:', error);
+    return null;
+  }
+}
+
+
+    public async deleteImage(fileId: string): Promise<boolean> {
+    try {
+        const _id = new mongoose.Types.ObjectId(fileId);
+
+        // Step 1: Find metadata document
+        const imageDoc = await this.imageModel.findOne({ fileId: _id });
+        if (!imageDoc) {
+            console.warn('No image metadata found');
+            return false;
+        }
+
+        // Step 2: Delete file from GridFS
+        await this.bucket.delete(_id);
+
+        // Step 3: Delete metadata document
+        await this.imageModel.deleteOne({ fileId: _id });
+
+        console.log(`Image and metadata deleted: ${fileId}`);
+        return true;
+    } catch (error) {
+        console.error('Error deleting image:', error);
+        return false;
+    }
+}
 
 }

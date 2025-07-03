@@ -4,6 +4,7 @@ import { Container } from 'typedi';
 import Joi from 'joi';
 import middlewares from '../middlewares';
 import ImageService from '../../services/Image';
+import { IImage } from '../../interfaces/Image';
 
 const route = Router();
 
@@ -35,34 +36,41 @@ const UploadImageSchema = Joi.object({
     height: Joi.number().integer().positive().optional(),
 });
 
+const UpdateImageSchema = Joi.object({
+    title: Joi.string().max(100).required(),
+    description: Joi.string().max(500).required(),
+    width: Joi.number().integer().positive().optional(),
+    height: Joi.number().integer().positive().optional(),
+});
+
 export default (app: Router) => {
     app.use('/images', route);
 
     route.get('/', async (req: Request, res: Response, next: NextFunction) => {
-    const imageService = Container.get(ImageService);
-    const cursor = req.query.cursor as string || null;
-    const limit = parseInt(req.query.limit as string) || 10;
-    const search = req.query.search as string || null;
+        const imageService = Container.get(ImageService);
+        const cursor = req.query.cursor as string || null;
+        const limit = parseInt(req.query.limit as string) || 10;
+        const search = req.query.search as string || null;
 
-    try {
-        const result = await imageService.getAllImages(cursor, limit, search);
+        try {
+            const result = await imageService.getAllImages(cursor, limit, search);
 
-        res.status(200).json({
-            returncode: '200',
-            message: 'Images retrieved successfully',
-            data: {
-                images: result.images,
-                pagination: {
-                    next_cursor: result.nextCursor,
-                    has_more: result.hasMore
+            res.status(200).json({
+                returncode: '200',
+                message: 'Images retrieved successfully',
+                data: {
+                    images: result.images,
+                    pagination: {
+                        next_cursor: result.nextCursor,
+                        has_more: result.hasMore
+                    }
                 }
-            }
-        });
-    } catch (error) {
-        console.error('Error retrieving images:', error);
-        next(error);
-    }
-});
+            });
+        } catch (error) {
+            console.error('Error retrieving images:', error);
+            next(error);
+        }
+    });
 
 
     route.post(
@@ -175,6 +183,99 @@ export default (app: Router) => {
             }
         } catch (error) {
             console.error('Error retrieving image:', error);
+            next(error);
+        }
+    });
+
+    route.put(
+        '/:fileId',
+        upload,
+        middlewares.validation(UpdateImageSchema),
+        async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+            try {
+                const fileId = req.params.fileId;
+                const file = req.file;
+
+                const imageService = Container.get(ImageService);
+                const { title, description, width, height } = req.body;
+
+                let updated: IImage | null;
+
+                if (file) {
+                    // If a new file is provided, validate it and replace everything
+                    const isImageValid = await imageService.validateImageFile(file.buffer);
+                    if (!isImageValid) {
+                        res.status(400).json({
+                            returncode: '400',
+                            message: 'Invalid image file',
+                        });
+                        return;
+                    }
+
+                    updated = await imageService.updateImageWithFile(
+                        fileId,
+                        file.buffer,
+                        file.originalname,
+                        file.mimetype,
+                        {
+                            title,
+                            description,
+                            width: width ? Number(width) : undefined,
+                            height: height ? Number(height) : undefined,
+                        }
+                    );
+                } else {
+                    // No file provided — just update metadata
+                    updated = await imageService.updateImageMetadata(fileId, {
+                        title,
+                        description,
+                        width: width ? Number(width) : undefined,
+                        height: height ? Number(height) : undefined,
+                    });
+                }
+
+                if (!updated) {
+                    res.status(404).json({
+                        returncode: '404',
+                        message: 'Image not found or update failed',
+                    });
+                    return;
+                }
+
+                res.status(200).json({
+                    returncode: '200',
+                    message: 'Image updated successfully',
+                    image: updated,
+                });
+            } catch (error) {
+                console.error('Error updating image:', error);
+                next(error);
+            }
+        }
+    );
+
+
+    route.delete('/:fileId', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const fileId = req.params.fileId;
+            const imageService = Container.get(ImageService);
+
+            const success = await imageService.deleteImage(fileId);
+
+            if (!success) {
+                res.status(404).json({
+                    returncode: '404',
+                    message: 'Image not found or deletion failed',
+                });
+                return;
+            }
+
+            res.status(200).json({
+                returncode: '200',
+                message: 'Image and metadata deleted successfully',
+            });
+        } catch (error) {
+            console.error('Error deleting image:', error);
             next(error);
         }
     });
